@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Ulang Tahun eyaaa 🎂 Capybara</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  // Palet resmi: krem, cokelat, oranye, kuning pastel. 3 warna inti + 1 aksen (R-29).
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          cream: '#FDFBF7',
+          cocoa: '#8B5A2B',
+          tangerine: { DEFAULT: '#FF9244', deep: '#E2762A', soft: '#FFC08A' },
+          butter: '#FFE3A3'
+        },
+        fontFamily: {
+          display: ['Quicksand', 'sans-serif'],
+          body: ['Inter', 'sans-serif']
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  html, body { height: 100%; }
+  body {
+    background: #FDFBF7;
+    color: #4A3423;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Fokus selalu terlihat untuk pengguna keyboard (R-32). */
+  :focus-visible { outline: 3px solid #E2762A; outline-offset: 3px; border-radius: 10px; }
+
+  /* Lapisan ornamen jeruk / balon / kelopak, identitas visual tema (R-20, R-22). */
+  .deco { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+  .deco span { position: absolute; font-size: 1.6rem; opacity: .5; animation: floaty 7s ease-in-out infinite; }
+
+  @keyframes floaty {
+    0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+    50%      { transform: translateY(-20px) rotate(var(--r, 0deg)); }
+  }
+  @keyframes flicker {
+    0%, 100% { transform: scale(1) translateY(0); opacity: 1; }
+    25%      { transform: scale(.9) translateY(1px); opacity: .85; }
+    50%      { transform: scale(1.08) translateY(-1px); opacity: 1; }
+    75%      { transform: scale(.95); opacity: .9; }
+  }
+  @keyframes spin360 { to { transform: rotate(360deg); } }
+  @keyframes wiggle { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+  @keyframes drift-up {
+    0%   { transform: translateY(10px) scale(.9); opacity: 0; }
+    40%  { opacity: .8; }
+    100% { transform: translateY(-46px) scale(1.15); opacity: 0; }
+  }
+
+  /* Layar bergaya slideshow: hanya satu yang tampil penuh. */
+  #app { position: fixed; inset: 0; z-index: 10; }
+  .screen {
+    position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden;
+    opacity: 0; visibility: hidden; transform: translateY(28px) scale(.99);
+    transition: opacity .55s ease, transform .55s ease, visibility .55s;
+  }
+  .screen.active { opacity: 1; visibility: visible; transform: none; }
+  .screen-inner {
+    min-height: 100%;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center;
+    justify-content: safe center;
+    gap: 1rem;
+    padding: 4.5rem 1.25rem 7.5rem;
+    text-align: center;
+  }
+
+  .flame { transform-box: fill-box; transform-origin: bottom center; animation: flicker .26s ease-in-out infinite; }
+  .blown .flame { opacity: 0; animation: none; transition: opacity .3s; }
+  .smoke { opacity: 0; }
+  .blown .smoke { animation: drift-up 1.6s ease-out forwards; animation-iteration-count: 1; }
+
+  .gift { cursor: pointer; transition: transform .3s ease; }
+  .gift:hover { transform: translateY(-4px) scale(1.02); }
+  .gift-lid { transform-box: fill-box; transform-origin: center bottom; transition: transform .7s cubic-bezier(.34, 1.56, .64, 1); }
+  .gift.open .gift-lid { transform: translateY(-34px) rotate(-16deg); }
+  .wiggle { animation: wiggle 1.8s ease-in-out infinite; }
+
+  .spin { animation: spin360 3s linear infinite; }
+
+  .polaroid { transition: transform .35s ease, box-shadow .35s ease; }
+  .polaroid:hover, .polaroid:focus-within { transform: rotate(0deg) translateY(-6px) scale(1.03); z-index: 5; }
+
+  .modal { opacity: 0; visibility: hidden; transition: opacity .3s ease, visibility .3s; }
+  .modal.open { opacity: 1; visibility: visible; }
+  .modal.open .modal-card { transform: translateY(0) scale(1); }
+  .modal-card { transform: translateY(20px) scale(.97); transition: transform .35s cubic-bezier(.34, 1.4, .64, 1); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .deco span, .spin, .wiggle, .flame { animation: none !important; }
+    .screen { transition: opacity .2s ease; transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Ornamen melayang: jeruk, balon, kelopak (motif tema capybara-jeruk). -->
+<div class="deco" aria-hidden="true">
+  <span style="top:8%;  left:6%;  --r:-12deg; animation-delay:0s">🍊</span>
+  <span style="top:22%; right:8%; --r:14deg;  animation-delay:1.2s">🎈</span>
+  <span style="top:62%; left:10%; --r:8deg;   animation-delay:.6s">🌸</span>
+  <span style="top:78%; right:12%;--r:-8deg;  animation-delay:1.8s">🍊</span>
+  <span style="top:44%; left:88%; --r:16deg;  animation-delay:.3s">🫧</span>
+  <span style="top:86%; left:42%; --r:-14deg; animation-delay:2.2s">🌸</span>
+</div>
+
+<main id="app">
+
+  <!-- ============ HALAMAN 1: INTRO ============ -->
+  <section class="screen active" id="screen-0" aria-label="Halaman pembuka">
+    <div class="screen-inner max-w-2xl mx-auto">
+      <div class="wiggle">
+        <svg viewBox="0 0 320 280" class="w-56 sm:w-72 h-auto mx-auto drop-shadow-sm" role="img" aria-label="Ilustrasi capybara lucu bertopi ulang tahun dengan jeruk di kepalanya">
+          <ellipse cx="160" cy="252" rx="118" ry="15" fill="#8B5A2B" opacity="0.08"/>
+          <ellipse cx="160" cy="176" rx="116" ry="72" fill="#C89B6B"/>
+          <ellipse cx="160" cy="122" rx="88" ry="80" fill="#D9AE7E"/>
+          <ellipse cx="86" cy="66" rx="22" ry="20" fill="#B98A5C"/>
+          <ellipse cx="234" cy="66" rx="22" ry="20" fill="#B98A5C"/>
+          <ellipse cx="88" cy="66" rx="11" ry="10" fill="#E6C39B"/>
+          <ellipse cx="232" cy="66" rx="11" ry="10" fill="#E6C39B"/>
+          <ellipse cx="160" cy="164" rx="56" ry="42" fill="#EBCB9E"/>
+          <circle cx="126" cy="110" r="10" fill="#3A2A1E"/>
+          <circle cx="194" cy="110" r="10" fill="#3A2A1E"/>
+          <circle cx="129.5" cy="106.5" r="3.2" fill="#FFFFFF"/>
+          <circle cx="197.5" cy="106.5" r="3.2" fill="#FFFFFF"/>
+          <circle cx="106" cy="142" r="11" fill="#F7B267" opacity="0.5"/>
+          <circle cx="214" cy="142" r="11" fill="#F7B267" opacity="0.5"/>
+          <ellipse cx="150" cy="152" rx="5" ry="7" fill="#4A3423"/>
+          <ellipse cx="170" cy="152" rx="5" ry="7" fill="#4A3423"/>
+          <path d="M160 162 q0 17 -15 19 M160 162 q0 17 15 19" stroke="#4A3423" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <!-- topi ulang tahun -->
+          <g transform="translate(168 20) rotate(14)">
+            <path d="M-34 64 L0 0 L34 64 Z" fill="#FF9244"/>
+            <path d="M-34 64 L0 0 L0 64 Z" fill="#E2762A" opacity="0.45"/>
+            <rect x="-13" y="34" width="26" height="8" rx="4" fill="#FFE3A3" transform="rotate(0)"/>
+            <circle cx="0" cy="-3" r="11" fill="#FFE3A3"/>
+          </g>
+          <!-- jeruk di kepala -->
+          <g transform="translate(84 44)">
+            <circle r="17" fill="#FF9244"/>
+            <circle r="11" fill="#FFB877"/>
+            <path d="M0 -17 q10 -10 22 -6 q-8 12 -22 6" fill="#7CB342"/>
+          </g>
+        </svg>
+      </div>
+      <p class="font-display font-semibold text-tangerine-deep tracking-wide text-sm sm:text-base">Untuk kamu, yang paling spesial 💛</p>
+      <h1 class="font-display font-bold text-cocoa text-3xl sm:text-5xl leading-tight">
+        Selamat Ulang Tahun, eyaaa! 🎂🎉
+      </h1>
+      <p class="text-cocoa/75 max-w-md text-base sm:text-lg">
+        Capybara kecil ini sudah menyiapkan beberapa kejutan buat kamu. Pelan-pelan aja ya, ikuti alurnya sampai habis 💛
+      </p>
+      <button id="startBtn" type="button"
+        class="mt-2 inline-flex items-center gap-2 rounded-full bg-tangerine hover:bg-tangerine-deep text-white font-display font-semibold text-lg px-8 py-3.5 shadow-lg shadow-tangerine/30 transition-colors">
+        Mulai ✨ <i class="fa-solid fa-arrow-down text-sm"></i>
+      </button>
+      <p class="text-cocoa/50 text-xs mt-1">Geser ke atas atau tekan tombol buat lanjut</p>
+    </div>
+  </section>
+
+  <!-- ============ HALAMAN 2: KADO ============ -->
+  <section class="screen" id="screen-1" aria-label="Halaman kado">
+    <div class="screen-inner max-w-xl mx-auto">
+      <h2 class="font-display font-bold text-cocoa text-2xl sm:text-4xl">Ada kado buat kamu 🎁</h2>
+      <p class="text-cocoa/75 max-w-sm">Klik kadonya, di dalamnya ada sesuatu yang bikin kamu senyum 😊</p>
+
+      <button id="giftBtn" type="button" class="gift mt-2" aria-label="Buka kotak kado">
+        <svg viewBox="0 0 240 230" class="w-56 sm:w-64 h-auto mx-auto drop-shadow-md">
+          <!-- badan kotak -->
+          <rect x="60" y="120" width="120" height="96" rx="12" fill="#FF9244"/>
+          <rect x="60" y="160" width="120" height="10" fill="#E2762A" opacity="0.35"/>
+          <!-- pita vertikal bawah tetap -->
+          <rect x="112" y="120" width="16" height="96" fill="#FFE3A3"/>
+          <!-- tutup + pita + pita hias (ikut terbuka) -->
+          <g class="gift-lid">
+            <rect x="46" y="98" width="148" height="34" rx="10" fill="#E2762A"/>
+            <rect x="112" y="98" width="16" height="34" fill="#FFE3A3"/>
+            <ellipse cx="102" cy="90" rx="24" ry="16" fill="#FF9244"/>
+            <ellipse cx="138" cy="90" rx="24" ry="16" fill="#FF9244"/>
+            <circle cx="120" cy="90" r="11" fill="#FFE3A3"/>
+          </g>
+          <!-- kilau -->
+          <g fill="#FFF3D6" opacity="0.9">
+            <path d="M190 70 l3 8 8 3 -8 3 -3 8 -3 -8 -8 -3 8 -3 z"/>
+            <path d="M52 62 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2 z"/>
+          </g>
+        </svg>
+        <span class="block mt-3 font-display font-semibold text-tangerine-deep">Ketuk kadonya 🎁</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ HALAMAN 3: GALERI 4 FOTO ============ -->
+  <section class="screen" id="screen-2" aria-label="Halaman galeri foto">
+    <div class="screen-inner max-w-4xl mx-auto">
+      <h2 class="font-display font-bold text-cocoa text-2xl sm:text-4xl">Memory Kita 📸</h2>
+      <p class="text-cocoa/75 max-w-md">Beberapa potret kecil yang selalu bikin aku senyum kalau lagi inget kamu.</p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mt-4 w-full place-items-center">
+        <!-- Ganti src dan caption sesuai foto kalian. -->
+        <figure class="polaroid bg-white p-3 pb-10 rounded-sm shadow-xl -rotate-2 w-full max-w-[300px]">
+          <div class="relative overflow-hidden rounded-sm aspect-[4/5] bg-butter/50">
+            <img src="photo 1.jpeg" alt="Foto kenangan kita 1" onerror="imgFallback(this)"
+                 class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+          </div>
+          <figcaption class="font-display font-semibold text-cocoa mt-3 -rotate-1">poto baren pertama kitaa</figcaption>
+        </figure>
+
+        <figure class="polaroid bg-white p-3 pb-10 rounded-sm shadow-xl rotate-1 w-full max-w-[300px]">
+          <div class="relative overflow-hidden rounded-sm aspect-[4/5] bg-butter/50">
+            <img src="photo 2.jpeg" alt="Foto kenangan kita 2" onerror="imgFallback(this)"
+                 class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+          </div>
+          <figcaption class="font-display font-semibold text-cocoa mt-3 rotate-1">poto bareng di balii</figcaption>
+        </figure>
+
+        <figure class="polaroid bg-white p-3 pb-10 rounded-sm shadow-xl -rotate-1 w-full max-w-[300px]">
+          <div class="relative overflow-hidden rounded-sm aspect-[4/5] bg-butter/50">
+            <img src="photo 3.jpeg" alt="Foto kenangan kita 3" onerror="imgFallback(this)"
+                 class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+          </div>
+          <figcaption class="font-display font-semibold text-cocoa mt-3 -rotate-1">photoboot pertamaa kitaa</figcaption>
+        </figure>
+
+        <figure class="polaroid bg-white p-3 pb-10 rounded-sm shadow-xl rotate-2 w-full max-w-[300px]">
+          <div class="relative overflow-hidden rounded-sm aspect-[4/5] bg-butter/50">
+            <img src="photo 4.jpeg" alt="Foto kenangan kita 4" onerror="imgFallback(this)"
+                 class="w-full h-full object-cover transition-transform duration-500 hover:scale-110">
+          </div>
+          <figcaption class="font-display font-semibold text-cocoa mt-3 rotate-1">photo terakhir kitaa sebelum aku pulangg:(</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HALAMAN 4: VIDEO ============ -->
+  <section class="screen" id="screen-3" aria-label="Halaman video">
+    <div class="screen-inner max-w-5xl mx-auto">
+      <h2 class="font-display font-bold text-cocoa text-2xl sm:text-4xl">Video Kita 🎬</h2>
+      <p class="text-cocoa/75 max-w-md">Tekan play ya, dua video ini khusus buat kamu.</p>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4 w-full items-start">
+        <!-- Video 1: landscape 16:9 -->
+        <figure class="w-full">
+          <video controls playsinline preload="metadata" src="video 2.mp4"
+                 class="w-full aspect-video rounded-2xl shadow-md border-4 border-white object-cover bg-cocoa/10"></video>
+          <figcaption class="font-display font-semibold text-cocoa mt-3">mamm barenggg</figcaption>
+        </figure>
+
+        <!-- Video 2: portrait 9:16 -->
+        <figure class="w-full">
+          <video controls playsinline preload="metadata" src="video.mp4"
+                 class="w-full aspect-[9/16] rounded-2xl shadow-md border-4 border-white object-cover max-w-[320px] mx-auto bg-cocoa/10"></video>
+          <figcaption class="font-display font-semibold text-cocoa mt-3">recape hitam putih</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HALAMAN 5: PESAN ============ -->
+  <section class="screen" id="screen-4" aria-label="Halaman pesan dan harapan">
+    <div class="screen-inner max-w-2xl mx-auto">
+      <h2 class="font-display font-bold text-cocoa text-2xl sm:text-4xl">Satu hal terakhir 🕯️</h2>
+
+      <!-- Kue dengan lilin berkedip -->
+      <svg viewBox="0 0 240 200" class="w-48 sm:w-56 h-auto mx-auto" role="img" aria-label="Kue ulang tahun dengan lilin menyala">
+        <ellipse cx="120" cy="188" rx="96" ry="10" fill="#8B5A2B" opacity="0.1"/>
+        <!-- piring -->
+        <ellipse cx="120" cy="176" rx="90" ry="12" fill="#FFE3A3"/>
+        <!-- lapisan bawah -->
+        <rect x="42" y="122" width="156" height="56" rx="14" fill="#F6C177"/>
+        <rect x="42" y="122" width="156" height="18" rx="9" fill="#FF9244"/>
+        <!-- lapisan atas -->
+        <rect x="66" y="88" width="108" height="44" rx="12" fill="#EBCB9E"/>
+        <rect x="66" y="88" width="108" height="14" rx="7" fill="#FFB877"/>
+        <!-- lilin -->
+        <rect x="115" y="52" width="10" height="42" rx="4" fill="#FDFBF7" stroke="#E2762A" stroke-width="2"/>
+        <!-- api -->
+        <g id="flameGroup" class="flame">
+          <path d="M120 30 q10 12 0 22 q-10 -10 0 -22 z" fill="#FFD166" stroke="#FF9244" stroke-width="2"/>
+          <path d="M120 40 q5 6 0 12 q-5 -6 0 -12 z" fill="#FFF6D6"/>
+        </g>
+        <!-- asap saat lilin ditiup -->
+        <g id="smokeGroup" class="smoke" stroke="#C6B7A5" stroke-width="3" fill="none" stroke-linecap="round">
+          <path d="M120 42 q-8 -6 0 -12 q8 -6 0 -12"/>
+        </g>
+      </svg>
+
+      <button id="blowBtn" type="button"
+        class="inline-flex items-center gap-2 rounded-full bg-tangerine hover:bg-tangerine-deep text-white font-display font-semibold text-lg px-8 py-3.5 shadow-lg shadow-tangerine/30 transition-colors">
+        Tiup Lilinnya! 🕯️
+      </button>
+      <p id="wishText" class="font-display font-semibold text-cocoa text-lg sm:text-xl min-h-[2rem]">
+        Bikin satu permohonan dulu ya, lalu tiup lilinnya 🥰
+      </p>
+
+      <!-- Amplop surat -->
+      <button id="openLetter" type="button"
+        class="mt-2 inline-flex items-center gap-3 rounded-2xl bg-white border-2 border-tangerine-soft px-6 py-4 shadow-md hover:border-tangerine transition-colors">
+        <i class="fa-solid fa-envelope-open-text text-2xl text-tangerine-deep"></i>
+        <span class="font-display font-semibold text-cocoa text-left">Buka surat dari aku 💌</span>
+      </button>
+
+      <footer class="mt-6 text-cocoa/70 text-sm">
+        Dibuat dengan sepenuh hati oleh pacarmu 🥰
+      </footer>
+    </div>
+  </section>
+
+</main>
+
+<!-- Tombol musik mengambang (piringan hitam berputar saat aktif) -->
+<button id="musicBtn" type="button" aria-label="Putar musik"
+  class="fixed bottom-5 right-5 z-40 grid place-items-center w-14 h-14 rounded-full bg-cocoa text-cream shadow-xl hover:bg-tangerine-deep transition-colors">
+  <i id="discIcon" class="fa-solid fa-compact-disc text-2xl"></i>
+  <span class="absolute -top-1 -right-1 grid place-items-center w-6 h-6 rounded-full bg-tangerine text-white text-[10px] border-2 border-cream">
+    <i id="ppIcon" class="fa-solid fa-play"></i>
+  </span>
+</button>
+<audio id="bgm" src="musik1.mp3" loop preload="auto" autoplay></audio>
+
+<!-- Navigasi slideshow -->
+<nav aria-label="Navigasi halaman" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3
+     rounded-full bg-white/90 backdrop-blur px-3 py-2 shadow-lg border border-tangerine-soft">
+  <button id="prevBtn" type="button" aria-label="Halaman sebelumnya"
+    class="grid place-items-center w-10 h-10 rounded-full text-cocoa hover:bg-butter transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+    <i class="fa-solid fa-chevron-up"></i>
+  </button>
+  <div id="dots" class="flex items-center gap-2 px-1"></div>
+  <button id="nextBtn" type="button" aria-label="Halaman berikutnya"
+    class="grid place-items-center w-10 h-10 rounded-full text-cocoa hover:bg-butter transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+    <i class="fa-solid fa-chevron-down"></i>
+  </button>
+</nav>
+
+<!-- Modal surat -->
+<div id="letterModal" class="modal fixed inset-0 z-50 grid place-items-center p-4 bg-cocoa/40" role="dialog" aria-modal="true" aria-labelledby="letterTitle" aria-hidden="true">
+  <div class="modal-card w-full max-w-lg max-h-[85vh] overflow-y-auto bg-cream rounded-2xl shadow-2xl border border-tangerine-soft p-6 sm:p-8 text-left">
+    <div class="flex items-start justify-between gap-4">
+      <h3 id="letterTitle" class="font-display font-bold text-cocoa text-xl sm:text-2xl">Buat eyaaa 💛</h3>
+      <button id="closeModal" type="button" aria-label="Tutup surat"
+        class="grid place-items-center w-9 h-9 rounded-full text-cocoa hover:bg-butter transition-colors shrink-0">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+    <div class="mt-4 space-y-4 text-cocoa/85 leading-relaxed">
+      <p>happy birthday nduttt sayang. selamat bertambah usia yaa sayangkuu, semoga tahun ini penuh kebahagiaan, semoga dengan bertambahnya umur kamu semakin dewasa.</p>
+      <p>makasiii udah sabar, dan sudah jadi rumah paling nyaman buat akuuu.akuu suka caramu ketawa, caramu ngambek, dan semua hal kecil tentang kamu.</p>
+      <p>semoga tahun ini penuh hal baik, kamu sehat terus, rezekinya lancar, mimpimu tercapai satu-per-satu, dan semoga aku masih boleh menemani kamu di setiap langkahnya.</p>
+      <p class="font-display font-semibold text-tangerine-deep">lovee u sayang, forever wiht u babee</p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script>
+  const CONFETTI_COLORS = ['#FF9244', '#FFE3A3', '#8B5A2B', '#FFC08A', '#FDFBF7'];
+
+  function celebrate() {
+    if (typeof confetti !== 'function') return;
+    confetti({ particleCount: 120, spread: 80, origin: { y: 0.7 }, colors: CONFETTI_COLORS });
+    confetti({ particleCount: 55, angle: 60, spread: 60, origin: { x: 0, y: 0.8 }, colors: CONFETTI_COLORS });
+    confetti({ particleCount: 55, angle: 120, spread: 60, origin: { x: 1, y: 0.8 }, colors: CONFETTI_COLORS });
+  }
+
+  // Placeholder jujur untuk foto yang belum ada (R-23, R-38).
+  function imgFallback(img) {
+    const ph = document.createElement('div');
+    ph.className = 'flex flex-col items-center justify-center gap-1 w-full h-full text-cocoa/60 text-xs';
+    ph.innerHTML = '<i class="fa-regular fa-image text-2xl"></i><span>' + img.getAttribute('src') + '</span>';
+    img.replaceWith(ph);
+  }
+
+  /* ================= NAVIGASI SLIDESHOW ================= */
+  const screens = Array.from(document.querySelectorAll('.screen'));
+  const dotsWrap = document.getElementById('dots');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const modal = document.getElementById('letterModal');
+  let index = 0;
+
+  screens.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.type = 'button';
+    dot.setAttribute('aria-label', 'Ke halaman ' + (i + 1));
+    dot.className = 'w-2.5 h-2.5 rounded-full bg-tangerine-soft transition-all';
+    dot.addEventListener('click', () => go(i));
+    dotsWrap.appendChild(dot);
+  });
+  const dots = Array.from(dotsWrap.children);
+
+  function go(n) {
+    n = Math.max(0, Math.min(screens.length - 1, n));
+    if (n === index) return;
+    screens[index].classList.remove('active');
+    index = n;
+    screens[index].classList.add('active');
+    screens[index].scrollTop = 0;
+    updateNav();
+  }
+
+  function updateNav() {
+    prevBtn.disabled = index === 0;
+    nextBtn.disabled = index === screens.length - 1;
+    dots.forEach((d, i) => {
+      d.className = 'rounded-full transition-all ' + (i === index ? 'w-6 h-2.5 bg-tangerine' : 'w-2.5 h-2.5 bg-tangerine-soft');
+    });
+  }
+
+  function modalOpen() { return modal.classList.contains('open'); }
+
+  prevBtn.addEventListener('click', () => go(index - 1));
+  nextBtn.addEventListener('click', () => go(index + 1));
+
+  // Keyboard: panah / PageUp / PageDown (nonaktif saat modal terbuka).
+  document.addEventListener('keydown', (e) => {
+    if (modalOpen()) return;
+    if (['ArrowDown', 'ArrowRight', 'PageDown'].includes(e.key)) { e.preventDefault(); go(index + 1); }
+    if (['ArrowUp', 'ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); go(index - 1); }
+  });
+
+  // Swipe (mobile).
+  let touchY = null;
+  document.getElementById('app').addEventListener('touchstart', (e) => { touchY = e.changedTouches[0].clientY; }, { passive: true });
+  document.getElementById('app').addEventListener('touchend', (e) => {
+    if (touchY === null || modalOpen()) return;
+    const dy = touchY - e.changedTouches[0].clientY;
+    if (Math.abs(dy) > 55) go(index + (dy > 0 ? 1 : -1));
+    touchY = null;
+  }, { passive: true });
+
+  // Wheel / scroll: geser konten dulu, baru pindah halaman.
+  let wheelLock = false;
+  window.addEventListener('wheel', (e) => {
+    if (modalOpen()) return;
+    const s = screens[index];
+    const atTop = s.scrollTop <= 0;
+    const atBottom = s.scrollTop + s.clientHeight >= s.scrollHeight - 2;
+    if ((e.deltaY > 0 && !atBottom) || (e.deltaY < 0 && !atTop)) return;
+    if (wheelLock) return;
+    wheelLock = true;
+    setTimeout(() => { wheelLock = false; }, 750);
+    go(index + (e.deltaY > 0 ? 1 : -1));
+  }, { passive: true });
+
+  /* ================= MUSIK ================= */
+  const audio = document.getElementById('bgm');
+  const musicBtn = document.getElementById('musicBtn');
+  const discIcon = document.getElementById('discIcon');
+  const ppIcon = document.getElementById('ppIcon');
+
+  function setMusicUI(playing) {
+    discIcon.classList.toggle('spin', playing);
+    ppIcon.className = 'fa-solid ' + (playing ? 'fa-pause' : 'fa-play');
+    musicBtn.setAttribute('aria-label', playing ? 'Jeda musik' : 'Putar musik');
+  }
+  function toggleMusic() {
+    if (audio.paused) {
+      audio.play().catch(() => {});
+    } else {
+      audio.pause();
+    }
+  }
+  audio.addEventListener('play', () => setMusicUI(true));
+  audio.addEventListener('pause', () => setMusicUI(false));
+  musicBtn.addEventListener('click', toggleMusic);
+  setMusicUI(false);
+
+  // Langsung coba putar musik saat web dibuka. Kalau browser memblokir autoplay
+  // tanpa gestur, musik otomatis mulai pada sentuhan / klik / tombol pertama.
+  function tryPlay() { if (audio.paused) audio.play().catch(() => {}); }
+  tryPlay();
+  window.addEventListener('load', tryPlay);
+  document.addEventListener('DOMContentLoaded', tryPlay);
+  ['pointerdown', 'touchstart', 'keydown', 'click', 'scroll'].forEach(function (evt) {
+    window.addEventListener(evt, tryPlay, { once: true, passive: true });
+  });
+
+  // Coba mulai musik pada interaksi pertama (browser butuh gestur pengguna).
+  const startBtn = document.getElementById('startBtn');
+  startBtn.addEventListener('click', () => {
+    audio.play().catch(() => {});
+    go(1);
+  });
+
+  /* ================= KADO ================= */
+  const giftBtn = document.getElementById('giftBtn');
+  giftBtn.addEventListener('click', () => {
+    if (giftBtn.classList.contains('open')) return;
+    giftBtn.classList.add('open');
+    celebrate();
+    setTimeout(() => go(2), 1000);
+  });
+
+  /* ================= TIUP LILIN ================= */
+  const blowBtn = document.getElementById('blowBtn');
+  const cakeSvg = blowBtn.closest('.screen-inner').querySelector('svg');
+  const wishText = document.getElementById('wishText');
+  blowBtn.addEventListener('click', () => {
+    if (blowBtn.disabled) return;
+    cakeSvg.classList.add('blown');
+    blowBtn.disabled = true;
+    blowBtn.classList.add('opacity-60', 'cursor-not-allowed');
+    wishText.textContent = 'Yeeaaay! Semoga panjang umur & bahagia selalu! ❤️';
+    celebrate();
+  });
+
+  /* ================= MODAL SURAT ================= */
+  const openLetter = document.getElementById('openLetter');
+  const closeModal = document.getElementById('closeModal');
+
+  function openModal() {
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    closeModal.focus();
+  }
+  function hideModal() {
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    openLetter.focus();
+  }
+  openLetter.addEventListener('click', openModal);
+  closeModal.addEventListener('click', hideModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) hideModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modalOpen()) hideModal(); });
+
+  updateNav();
+</script>
+</body>
+</html>
