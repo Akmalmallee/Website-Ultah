@@ -437,24 +437,27 @@
     if (['ArrowUp', 'ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); go(index - 1); }
   });
 
-  // Swipe (mobile).
+  // Halaman masih bisa di-scroll? Kalau ya, scroll/swipe TIDAK memindah halaman
+  // supaya isi halaman bisa dilihat sampai habis. Pindah lewat tombol navigasi.
+  function screenScrollable() {
+    const s = screens[index];
+    return s.scrollHeight > s.clientHeight + 2;
+  }
+
+  // Swipe (mobile): hanya pindah halaman kalau kontennya sudah muat penuh di layar.
   let touchY = null;
   document.getElementById('app').addEventListener('touchstart', (e) => { touchY = e.changedTouches[0].clientY; }, { passive: true });
   document.getElementById('app').addEventListener('touchend', (e) => {
-    if (touchY === null || modalOpen()) return;
+    if (touchY === null || modalOpen()) { touchY = null; return; }
     const dy = touchY - e.changedTouches[0].clientY;
-    if (Math.abs(dy) > 55) go(index + (dy > 0 ? 1 : -1));
+    if (Math.abs(dy) > 55 && !screenScrollable()) go(index + (dy > 0 ? 1 : -1));
     touchY = null;
   }, { passive: true });
 
-  // Wheel / scroll: geser konten dulu, baru pindah halaman.
+  // Wheel (desktop): sama, jangan pindah halaman selama konten masih bisa di-scroll.
   let wheelLock = false;
   window.addEventListener('wheel', (e) => {
-    if (modalOpen()) return;
-    const s = screens[index];
-    const atTop = s.scrollTop <= 0;
-    const atBottom = s.scrollTop + s.clientHeight >= s.scrollHeight - 2;
-    if ((e.deltaY > 0 && !atBottom) || (e.deltaY < 0 && !atTop)) return;
+    if (modalOpen() || screenScrollable()) return;
     if (wheelLock) return;
     wheelLock = true;
     setTimeout(() => { wheelLock = false; }, 750);
